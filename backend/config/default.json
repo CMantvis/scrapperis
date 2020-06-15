@@ -1,0 +1,6 @@
+{
+    "jwtPrivateKey": "unsecureKey",
+    "db": "mongodb://localhost/jobs",
+    "port": "3001"
+  }
+  

@@ -1,0 +1,4 @@
+{
+    "jwtPrivateKey": "jwt_key",
+    "db": "scrapper_db"
+  }
