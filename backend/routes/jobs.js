@@ -6,7 +6,9 @@ const { User } = require("../models/user");
 const cvbankas = require("../cvbankas");
 const cvonline = require("../cvonline");
 const cvmarket = require("../cvmarket");
+const puppeteer = require("puppeteer")
 const auth = require("../middleware/auth");
+const { browser } = require("../cvbankas");
 
 router.get("/:id", (req, res, next) => {
 
@@ -25,6 +27,7 @@ router.get("/:id", (req, res, next) => {
         .catch(err => next(err))
 });
 
+
 router.get("/auth/:id", auth, async (req, res, next) => {
 
     const startDate = new Date();
@@ -34,7 +37,7 @@ router.get("/auth/:id", auth, async (req, res, next) => {
     try {
         const user = await User.findOne({ _id: req.user._id });
         if (!user) return res.status(404).send("No user with the given id found");
-        Job.find({
+        const jobs = await Job.find({
             dateScrapped: {
                 $gte: new Date(new Date(startDate).setHours(00, 00, 00)),
                 $lt: new Date(new Date(endDate).setHours(23, 59, 59))
@@ -50,7 +53,7 @@ router.get("/auth/:id", auth, async (req, res, next) => {
             }
             return item
         });
-        res.send(job);
+        res.send(jobs);
 
     } catch (err) {
         next(err)
@@ -69,10 +72,10 @@ router.post("/", async (req, res, next) => {
 
             await cvmarket.initialize(keyword);
             const cvmarketResults = await cvmarket.getResults(keyword);
+            
+            const results = [...cvbankasResults, ...cvonlineResults, ...cvmarketResults];
 
-            const results = [...cvbankasResults, ...cvonlineResults, ...cvmarketResults]
-
-            const jobsCount = await Job.countDocuments()
+            const jobsCount = await Job.countDocuments();
 
             if (jobsCount === 0) {
                 Job.collection.insertMany(results);
@@ -88,17 +91,17 @@ router.post("/", async (req, res, next) => {
 
                 jobs.map(item => {
                     if (item.keyword === req.body.keyword) {
-                        filteredJobs.push(item)
+                        filteredJobs.push(item);
                     }
                 });
 
-                filteredJobs.length === 0?jobsUrls = jobs.map(item => item.jobUrl):jobsUrls = filteredJobs.map(item => item.jobUrl)
+                filteredJobs.length === 0?jobsUrls = jobs.map(item => item.jobUrl):jobsUrls = filteredJobs.map(item => item.jobUrl);
 
                 // filter all duplicating urls from results
                 let filteredResultsUrls = resultsUrls.filter(url => !jobsUrls.includes(url));
 
                 const filteredResults = results.filter(item => {
-                    return filteredResultsUrls.indexOf(item.jobUrl) !== -1
+                    return filteredResultsUrls.indexOf(item.jobUrl) !== -1;
                 });
 
                 // put filtered results into jobs docs
@@ -107,7 +110,7 @@ router.post("/", async (req, res, next) => {
             }
         })(req.body.keyword);
     } catch (err) {
-        next(err)
+        next(err);
     }
 });
 

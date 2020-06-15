@@ -7,10 +7,19 @@ const self = {
     initialize: async (keyword) => {
         let queryString = keyword.replace(/\s/g, "+");
         let url = `https://www.cvmarket.lt/joboffers.php?_track=index_click_job_search&op=search&search_location=landingpage&ga_track=homepage&search%5Bkeyword%5D=php&mobile_search%5Bkeyword%5D=&tmp_city=&tmp_cat=&tmp_city=&tmp_category=&search%5Bkeyword%5D=${queryString}&search%5Bexpires_days%5D=&search%5Bjob_lang%5D=&search%5Bsalary%5D=&search%5Bjob_salary%5D=3`;
-        self.browser = await puppeteer.launch();
+        self.browser = await puppeteer.launch({
+            args: [
+              '--no-sandbox'
+            ],
+          });
         self.page = await self.browser.newPage();
         // go to the searched page
-        await self.page.goto(url, {waitUntil: "networkidle0" });
+        try {
+            await self.page.goto(url, {waitUntil: 'load', timeout: 0});
+        } catch (error) {
+            console.log(error);
+            browser.close();
+        }
     },
 
     getResults: async (keyword) => {
@@ -56,6 +65,7 @@ const self = {
                 dateScrapped: new Date()
             });
         }
+        self.browser.close();
         return results;
     }
 }

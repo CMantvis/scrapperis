@@ -7,10 +7,19 @@ const self = {
     initialize: async (keyword) => {
         const queryString = keyword.replace(/\s/g, "%20");
         const url = `https://www.cvonline.lt/darbo-skelbimai/q-${queryString}`;
-        self.browser = await puppeteer.launch();
+        self.browser = await puppeteer.launch({
+            args: [
+              '--no-sandbox'
+            ],
+          });
         self.page = await self.browser.newPage();
         // go to the searched page
-        await self.page.goto(url, { waitUntil: "networkidle0" });
+        try {
+            await self.page.goto(url, {waitUntil: 'load', timeout: 0});
+        } catch (error) {
+            console.log(error);
+            browser.close();
+        }
     },
 
     getResults: async (keyword, website) => {
@@ -54,6 +63,7 @@ const self = {
                 dateScrapped: new Date()
             });
         }
+        self.browser.close();
         return results;
     }
 }
